@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta property="og:title" content="Stream 'Broma / Cuisne [OG] (Explicit)' by Freeze Corleone premiered at RUN MTP (2018), leaked studio unreleased version">
+    <meta property="og:description" content="Listen to Broma / Cuisine studio version! Do not make us famous ;)">
+    <meta property="og:image" content="https://raw.githubusercontent.com/lmaogoodcodenotreally/fmlgs/main/ressources/images/FRA/Broma/7550c370d1e4b8872b3c8cff5ff42478.1000x1000x1.jpg">
+    <meta property="og:url" content="https://lmaogoodcodenotreally.github.io/shared/FRA/FreezeCorleone/Broma">
+    <title></title>
+    <link rel="stylesheet" type="text/css" href="broma.css">
+    <style>
+        .background-blur {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            filter: blur(10px);
+            z-index: -1;
+            transition: background-position 60s, background-size 60s;
+        }
+
+        .player-container {
+            position: relative;
+            perspective: 1000px;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .player {
+            transform-style: preserve-3d;
+            transition: transform 0.1s;
+        }
+
+        .controls {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+            transition: opacity 0.3s;
+        }
+
+        .controls.hidden {
+            opacity: 0;
+        }
+
+        .controls.show {
+            opacity: 1;
+        }
+
+        .controls button {
+            font-size: 2rem;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .controls button:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(28, 28, 28, 0.9);
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #333333;
+            transition: transform 0.5s ease-out, opacity 0.5s ease-out;
+        }
+
+        header.hide {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="background-blur"></div>
+    <header>
+        <div class="track-title"></div>
+    </header>
+    <div class="container">
+        <div class="player-container">
+            <div class="player">
+                <img id="album-cover" src="" alt="Album Art">
+                <div class="controls">
+                    <button id="play-pause-button">&#9658;</button>
+                </div>
+                <div class="seekbar-container">
+                    <span class="time" id="current-time">0:00</span>
+                    <input type="range" id="seekbar" class="seekbar" value="0" min="0" step="0.1" disabled>
+                    <span class="time" id="duration-time">0:00</span>
+                </div>
+                <audio id="audio" preload="auto"></audio>
+            </div>
+        </div>
+        <div class="track-list" id="track-list"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const audio = document.getElementById('audio');
+            const seekbar = document.getElementById('seekbar');
+            const currentTimeElement = document.getElementById('current-time');
+            const durationTimeElement = document.getElementById('duration-time');
+            const trackList = document.getElementById('track-list');
+            const albumCover = document.getElementById('album-cover');
+            const playPauseButton = document.getElementById('play-pause-button');
+            const backgroundBlur = document.querySelector('.background-blur');
+            const trackTitleElement = document.querySelector('.track-title');
+            const header = document.querySelector('header');
+            const controls = document.querySelector('.controls');
+            const player = document.querySelector('.player');
+
+            let isPlaying = false;
+            let hideTimeout;
+
+            audio.volume = 0.7;
+
+            function getRandomOffset() {
+                return Math.random() * 100; // Random value between 0 and 100
+            }
+
+            function getRandomZoom() {
+                return 200 + Math.random() * 50; // Random zoom between 200% and 250%
+            }
+
+            function updateBackgroundProperties() {
+                const xOffset = getRandomOffset();
+                const yOffset = getRandomOffset();
+                const zoom = getRandomZoom();
+                backgroundBlur.style.backgroundPosition = `${xOffset}% ${yOffset}%`;
+                backgroundBlur.style.backgroundSize = `${zoom}% ${zoom}%`;
+            }
+
+            function startBackgroundAnimation() {
+                updateBackgroundProperties();
+                setInterval(updateBackgroundProperties, 20000); // Update every 20 seconds
+            }
+
+            function handleMouseMove(event) {
+                const x = (event.clientX / window.innerWidth) * 20 - 10; // -10 to 10 range
+                const y = (event.clientY / window.innerHeight) * 20 - 10; // -10 to 10 range
+                const z = 50 + (event.clientY / window.innerHeight) * 100; // Adjust depth based on vertical position
+                player.style.transform = `rotateX(${y}deg) rotateY(${x}deg) translateZ(${z}px)`;
+            }
+
+            document.addEventListener('mousemove', handleMouseMove);
+
+            function togglePlayPause() {
+                if (isPlaying) {
+                    audio.pause();
+                    playPauseButton.innerHTML = '&#9658;'; // Play icon
+                    controls.classList.add('hidden');
+                } else {
+                    audio.play();
+                    playPauseButton.innerHTML = '&#10074;&#10074;'; // Pause icon
+                    controls.classList.remove('hidden');
+                    resetHideTimeout();
+                }
+                isPlaying = !isPlaying;
+            }
+
+            playPauseButton.addEventListener('click', togglePlayPause);
+
+            function resetHideTimeout() {
+                clearTimeout(hideTimeout);
+                hideTimeout = setTimeout(() => {
+                    controls.classList.add('hidden');
+                }, 3000);
+            }
+
+            controls.addEventListener('mouseover', () => {
+                controls.classList.remove('hidden');
+                resetHideTimeout();
+            });
+
+            controls.addEventListener('mouseleave', () => {
+                controls.classList.add('hidden');
+            });
+
+            fetch('https://raw.githubusercontent.com/lmaogoodcodenotreally/fmlgs/main/ressources/json/FRA/broma.json')
+                .then(response => response.json())
+                .then(data => {
+                    const track = data.tracks[0];
+                    const type = track.type;
+                    document.title = `${track.title} - ${data.artist} [${type}]`;
+                    trackTitleElement.textContent = `${track.title} - ${data.artist} [${type}]`;
+                    const coverUrl = track.cover_url;
+                    albumCover.src = coverUrl;
+                    albumCover.crossOrigin = "Anonymous";
+
+                    albumCover.onload = function() {
+                        backgroundBlur.style.backgroundImage = `url(${coverUrl})`;
+                        startBackgroundAnimation(); // Start the background animation when the cover is loaded
+                    };
+
+                    // Set audio source and type
+                    audio.src = track.audio_stream_url;
+                    audio.type = 'audio/flac'; // Adjust type based on your audio file format
+                    audio.preload = 'auto';
+
+                    // Enable controls only after media is loaded
+                    audio.addEventListener('canplaythrough', () => {
+                        playPauseButton.disabled = false;
+                        seekbar.disabled = false;
+                    });
+
+                    audio.addEventListener('error', (e) => {
+                        console.error('Error loading audio:', e);
+                    });
+
+                    data.tracks.forEach(track => {
+                        if (track.type === "FLAC") {
+                            trackItem.addEventListener('click', () => {
+                                audio.src = track.audio_stream_url;
+                                audio.type = 'audio/flac'; // Adjust type based on your audio file format
+                                audio.load();
+                                audio.play();
+                                playPauseButton.innerHTML = '&#10074;&#10074;'; // Pause icon
+                                isPlaying = true;
+                                controls.classList.remove('hidden');
+                                albumCover.src = track.cover_url;
+                                backgroundBlur.style.backgroundImage = `url(${track.cover_url})`;
+                                startBackgroundAnimation(); // Restart animation on track change
+                            });
+                        }
+                    });
+
+                    audio.addEventListener('loadedmetadata', () => {
+                        seekbar.max = audio.duration;
+                        durationTimeElement.textContent = formatTime(audio.duration);
+                    });
+
+                    audio.addEventListener('timeupdate', () => {
+                        seekbar.value = audio.currentTime;
+                        currentTimeElement.textContent = formatTime(audio.currentTime);
+                    });
+
+                    seekbar.addEventListener('input', () => {
+                        audio.currentTime = seekbar.value;
+                        currentTimeElement.textContent = formatTime(audio.currentTime);
+                    });
+
+                    function formatTime(seconds) {
+                        const minutes = Math.floor(seconds / 60);
+                        const secs = Math.floor(seconds % 60);
+                        return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+                    }
+                });
+
+            // Handle header visibility
+            setTimeout(() => {
+                header.classList.add('hide');
+            }, 3000);
+
+            document.addEventListener('mousemove', (event) => {
+                if (event.clientY < 50) {
+                    header.classList.remove('hide');
+                } else {
+                    header.classList.add('hide');
+                }
+            });
+        });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
+</body>
+</html>
